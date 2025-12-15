@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Multi-Mode Multi-Language Translator</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1e 100%);
+      --card: rgba(25, 25, 40, 0.8);
+      --muted: #a8a8b8;
+      --accent: #f6f0eb;
+      --accent-glow: rgba(0, 212, 255, 0.3);
+      --success: #00ff88;
+      --white: #fff;
+      --panel: rgba(20, 20, 35, 0.7);
+      --pill: linear-gradient(135deg, #fbdd73 0%, #e27ecb 100%);
+      --border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(20px);
+    }
+
+    header {
+      background: var(--card);
+      padding: 24px 32px;
+      border-bottom: 2px solid var(--border);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f9f9f8 0%, #fff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .mode-switch {
+      display: flex;
+      gap: 12px;
+      background: var(--panel);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .btn {
+      background: var(--pill);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: 0;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .btn.secondary {
+      background: transparent;
+      color: var(--white);
+      border: 2px solid var(--border);
+      box-shadow: none;
+    }
+
+    .btn.secondary:hover {
+      background: var(--panel);
+      border-color: var(--accent);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .left-panel {
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .label {
+      display: inline-block;
+      background: var(--pill);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--panel);
+      color: var(--white);
+      font-size: 15px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .translate-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--success);
+      font-weight: 600;
+      min-height: 20px;
+    }
+
+    .langs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .lang-card {
+      background: var(--panel);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .lang-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+    }
+
+    .lang-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .lang-title {
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .lang-body {
+      background: linear-gradient(185deg, #fff 0%, #e488e9 100%);
+      color: #000;
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 60px;
+      white-space: pre-wrap;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .copy-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 11px;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .copy-btn.copied {
+      background: var(--success);
+      animation: copyPulse 0.6s ease;
+    }
+
+    @keyframes copyPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.15);
+      }
+    }
+
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 20px;
+      padding-right: 8px;
+    }
+
+    #kvOutputs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kv-block {
+      background: var(--panel);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .kv-block:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+    }
+
+    .kv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(0, 212, 255, 0.1);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kv-lang-title {
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .kv-copy-btn {
+      background: var(--pill);
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .kv-copy-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .kv-copy-btn.copied {
+      background: var(--success);
+      animation: copyPulse 0.6s ease;
+    }
+
+    .kv-body {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
+      color: #000;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--panel);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00aadd;
+    }
+
+    @media (max-width: 1200px) {
+      .main-content {
+        flex-direction: column;
+      }
+
+      .left-panel {
+        width: 100%;
+      }
+
+      .langs {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 16px 20px;
+      }
+
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .main-content {
+        padding: 16px 20px;
+      }
+
+      .langs {
+        grid-template-columns: 1fr;
+      }
+
+      .kv-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="header-content">
+        <div class="header-left">
+          <h1>🌐 Translate Your Key & Value</h1>
+          <div class="subtitle">Translate to 7 Indian languages instantly • Powered by BankBenchers</div>
+        </div>
+        <div class="mode-switch">
+          <button id="btnKeyVal" class="btn secondary">KEY=VALUE</button>
+          <button id="btnIndividual" class="btn">INDIVIDUAL</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="card">
+          <div class="label">📝 INPUT</div>
+
+          <div id="individualArea">
+            <input id="individualInput" type="text" placeholder="Type your text here... ">
+            <div class="translate-row">
+              <button id="individualTranslate" class="btn">Translate Now</button>
+            </div>
+            <div class="status" id="indStatus"></div>
+          </div>
+
+          <div id="keyValueArea" style="display:none; flex:1; flex-direction:column;">
+            <textarea id="kvInput" rows="12" placeholder="Paste key=value pairs here (one per line)" style="flex:1"></textarea>
+            <div class="translate-row">
+              <button id="kvTranslate" class="btn">Translate All</button>
+              <button id="kvClear" class="btn secondary">Clear</button>
+            </div>
+            <div class="status" id="kvStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="card">
+          <div class="label">✨ TRANSLATIONS</div>
+
+          <div id="individualOutputs" class="langs">
+            
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">ENGLISH</div>
+                <button class="copy-btn" data-lang="en">COPY</button>
+              </div>
+              <div id="out_en" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">HINDI</div>
+                <button class="copy-btn" data-lang="hi">COPY</button>
+              </div>
+              <div id="out_hi" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">MARATHI</div>
+                <button class="copy-btn" data-lang="mr">COPY</button>
+              </div>
+              <div id="out_mr" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">GUJARATI</div>
+                <button class="copy-btn" data-lang="gu">COPY</button>
+              </div>
+              <div id="out_gu" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">TAMIL</div>
+                <button class="copy-btn" data-lang="ta">COPY</button>
+              </div>
+              <div id="out_ta" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">TELUGU</div>
+                <button class="copy-btn" data-lang="te">COPY</button>
+              </div>
+              <div id="out_te" class="lang-body">—</div>
+            </div>
+
+            <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">KANNADA</div>
+                <button class="copy-btn" data-lang="kn">COPY</button>
+              </div>
+              <div id="out_kn" class="lang-body">—</div>
+            </div>
+
+            <!-- <div class="lang-card">
+              <div class="lang-head">
+                <div class="lang-title">KANNADA</div>
+                <button class="copy-btn" data-lang="kn">COPY</button>
+              </div>
+              <div id="out_kn" class="lang-body">—</div>
+            </div> -->
+          </div>
+
+          <div id="kvOutputs" style="display:none">
+            <div class="kv-grid" id="kvBlocks"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function googleTranslate(text, target) {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&dt=t&tl=${encodeURIComponent(target)}&q=${encodeURIComponent(text)}`;
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        if (!Array.isArray(data) || !Array.isArray(data[0])) return "—";
+        return data[0].map(seg => seg[0]).join('');
+      } catch (e) {
+        return "—";
+      }
+    }
+
+    function protectPlaceholders(text) {
+      const placeholders = {};
+      let idx = 0;
+      const replaced = text.replace(/\{(\d+)\}/g, (m) => {
+        const token = `__PH_${idx}__`;
+        placeholders[token] = m;
+        idx++;
+        return token;
+      });
+      return { replaced, placeholders };
+    }
+
+    function restorePlaceholders(text, placeholders) {
+      let out = text;
+      for (const token in placeholders) {
+        out = out.split(token).join(placeholders[token]);
+      }
+      return out;
+    }
+
+    const LANGS = [
+      { id: 'en', label: 'ENGLISH', code: 'en' },
+      { id: 'hi', label: 'HINDI', code: 'hi' },
+      { id: 'mr', label: 'MARATHI', code: 'mr' },
+      { id: 'gu', label: 'GUJARATI', code: 'gu' },
+      { id: 'ta', label: 'TAMIL', code: 'ta' },
+      { id: 'te', label: 'TELUGU', code: 'te' },
+      { id: 'kn', label: 'KANNADA', code: 'kn' },
+      //{ id: 'kn', label: 'KANNADA', code: 'kn' },
+    ];
+
+    const btnIndividual = document.getElementById('btnIndividual');
+    const btnKeyVal = document.getElementById('btnKeyVal');
+    const individualArea = document.getElementById('individualArea');
+    const keyValueArea = document.getElementById('keyValueArea');
+    const individualInput = document.getElementById('individualInput');
+    const individualTranslate = document.getElementById('individualTranslate');
+    const indStatus = document.getElementById('indStatus');
+    const kvInput = document.getElementById('kvInput');
+    const kvTranslate = document.getElementById('kvTranslate');
+    const kvClear = document.getElementById('kvClear');
+    const kvStatus = document.getElementById('kvStatus');
+    const kvOutputs = document.getElementById('kvOutputs');
+    const kvBlocks = document.getElementById('kvBlocks');
+
+    btnIndividual.addEventListener('click', () => switchMode('individual'));
+    btnKeyVal.addEventListener('click', () => switchMode('kv'));
+
+    function switchMode(mode) {
+      if (mode === 'individual') {
+        individualArea.style.display = 'block';
+        keyValueArea.style.display = 'none';
+        document.getElementById('individualOutputs').style.display = 'grid';
+        kvOutputs.style.display = 'none';
+        btnIndividual.classList.remove('secondary');
+        btnKeyVal.classList.add('secondary');
+      } else {
+        individualArea.style.display = 'none';
+        keyValueArea.style.display = 'flex';
+        document.getElementById('individualOutputs').style.display = 'none';
+        kvOutputs.style.display = 'flex';
+        btnKeyVal.classList.remove('secondary');
+        btnIndividual.classList.add('secondary');
+      }
+    }
+
+    async function copyText(txt) {
+      try {
+        await navigator.clipboard.writeText(txt);
+        return true;
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          return true;
+        } catch (e2) {
+          document.body.removeChild(ta);
+          return false;
+        }
+      }
+    }
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const langId = this.getAttribute('data-lang');
+        const el = document.getElementById('out_' + langId);
+        if (!el) return;
+        const txt = el.innerText || '';
+
+        copyText(txt).then(ok => {
+          if (ok) {
+            this.classList.add('copied');
+            this.innerText = '✓ COPIED';
+            indStatus.innerText = `✓ ${langId.toUpperCase()} copied to clipboard!`;
+            setTimeout(() => {
+              this.classList.remove('copied');
+              this.innerText = 'COPY';
+              indStatus.innerText = '';
+            }, 1500);
+          } else {
+            indStatus.innerText = '✗ Copy failed';
+            setTimeout(() => indStatus.innerText = '', 1500);
+          }
+        });
+      });
+    });
+
+    individualTranslate.addEventListener('click', doIndividualTranslate);
+
+    individualInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        doIndividualTranslate();
+      }
+    });
+
+    let indRunning = false;
+    async function doIndividualTranslate() {
+      const text = individualInput.value.trim();
+      document.getElementById('out_en').innerText = text || '—';
+      if (!text) {
+        LANGS.slice(1).forEach(l => document.getElementById('out_' + l.id).innerText = '—');
+        return;
+      }
+      if (indRunning) return;
+      indRunning = true;
+      indStatus.innerText = '🔄 Translating...';
+      try {
+        const { replaced, placeholders } = protectPlaceholders(text);
+        for (const lang of LANGS) {
+          if (lang.code === 'en') continue;
+          const translated = await googleTranslate(replaced, lang.code);
+          const restored = restorePlaceholders(translated, placeholders);
+          document.getElementById('out_' + lang.id).innerText = restored || '—';
+        }
+        indStatus.innerText = '✓ Translation complete!';
+        setTimeout(() => indStatus.innerText = '', 2000);
+      } catch (e) {
+        indStatus.innerText = '✗ Translation error';
+      } finally {
+        indRunning = false;
+      }
+    }
+
+    kvTranslate.addEventListener('click', doKVTranslate);
+    kvClear.addEventListener('click', () => {
+      kvInput.value = '';
+      kvBlocks.innerHTML = '';
+      kvStatus.innerText = '✓ Cleared';
+      setTimeout(() => kvStatus.innerText = '', 1000);
+    });
+
+    function parseKeyValues(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const pairs = [];
+      for (const line of lines) {
+        const idx = line.indexOf('=');
+        if (idx === -1) {
+          pairs.push({ key: line, val: '' });
+        } else {
+          const key = line.slice(0, idx).trim();
+          const val = line.slice(idx + 1).trim();
+          pairs.push({ key, val });
+        }
+      }
+      return pairs;
+    }
+
+    function escapeDelim(s) { return s.split('__KV_DELIM__').join('__KV_DELIM_ESC__'); }
+    function unescapeDelim(s) { return s.split('__KV_DELIM_ESC__').join('__KV_DELIM__'); }
+
+    async function doKVTranslate() {
+      const raw = kvInput.value.trim();
+      if (!raw) {
+        kvStatus.innerText = '⚠️ Please paste key=value lines';
+        setTimeout(() => kvStatus.innerText = '', 2000);
+        return;
+      }
+      kvStatus.innerText = '📋 Parsing...';
+      const pairs = parseKeyValues(raw);
+      if (pairs.length === 0) {
+        kvStatus.innerText = '⚠️ No valid lines found';
+        setTimeout(() => kvStatus.innerText = '', 2000);
+        return;
+      }
+
+      const DELIM = '__KV_DELIM__';
+      let valuesConcat = pairs.map(p => escapeDelim(p.val)).join(DELIM);
+      const { replaced, placeholders } = protectPlaceholders(valuesConcat);
+
+      kvStatus.innerText = '🔄 Translating...';
+      kvBlocks.innerHTML = '';
+
+      const resultsPerLang = {};
+      for (const lang of LANGS) {
+        if (lang.code === 'en') {
+          resultsPerLang[lang.id] = pairs.map(p => `${p.key}=${p.val}`);
+          continue;
+        }
+
+        const translatedBlob = await googleTranslate(replaced, lang.code);
+        const restoredBlob = restorePlaceholders(translatedBlob, placeholders);
+        const unescaped = unescapeDelim(restoredBlob);
+        const parts = unescaped.split(DELIM).map(s => s.trim());
+
+        if (parts.length !== pairs.length) {
+          const alt = unescaped.split(/\r?\n/).map(s => s.trim()).filter(s => s !== '');
+          if (alt.length === pairs.length) {
+            resultsPerLang[lang.id] = pairs.map((p, i) => `${p.key}=${alt[i]}`);
+          } else {
+            const per = [];
+            for (let i = 0; i < pairs.length; i++) {
+              const v = pairs[i].val;
+              const { replaced: r2, placeholders: ph2 } = protectPlaceholders(escapeDelim(v));
+              const t2 = await googleTranslate(r2, lang.code);
+              const restored2 = restorePlaceholders(t2, ph2);
+              per.push(`${pairs[i].key}=${unescapeDelim(restored2)}`);
+            }
+            resultsPerLang[lang.id] = per;
+          }
+        } else {
+          resultsPerLang[lang.id] = pairs.map((p, i) => `${p.key}=${parts[i]}`);
+        }
+        await new Promise(r => setTimeout(r, 80));
+      }
+
+      kvBlocks.innerHTML = '';
+      for (const lang of LANGS) {
+        const block = document.createElement('div');
+        block.className = 'kv-block';
+
+        const header = document.createElement('div');
+        header.className = 'kv-header';
+
+        const title = document.createElement('div');
+        title.className = 'kv-lang-title';
+        title.innerText = lang.label;
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'kv-copy-btn';
+        copyBtn.innerText = 'COPY ALL';
+        copyBtn.addEventListener('click', function () {
+          const lines = resultsPerLang[lang.id] || [];
+          copyText(lines.join('\n')).then(ok => {
+            if (ok) {
+              this.classList.add('copied');
+              this.innerText = '✓ COPIED';
+              kvStatus.innerText = `✓ ${lang.label} copied to clipboard!`;
+              setTimeout(() => {
+                this.classList.remove('copied');
+                this.innerText = 'COPY ALL';
+                kvStatus.innerText = '';
+              }, 1500);
+            } else {
+              kvStatus.innerText = '✗ Copy failed';
+              setTimeout(() => kvStatus.innerText = '', 1500);
+            }
+          });
+        });
+
+        header.appendChild(title);
+        header.appendChild(copyBtn);
+
+        const body = document.createElement('div');
+        body.className = 'kv-body';
+        const lines = resultsPerLang[lang.id] || [];
+        body.innerText = lines.join('\n') || '—';
+
+        block.appendChild(header);
+        block.appendChild(body);
+        kvBlocks.appendChild(block);
+      }
+      kvStatus.innerText = '✓ Translation complete!';
+      setTimeout(() => kvStatus.innerText = '', 2000);
+    }
+
+    //for bydefault value key value mode
+    switchMode('kv');
+  </script>
+</body>
+
+</html>
