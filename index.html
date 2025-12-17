@@ -451,7 +451,8 @@
           </div>
 
           <div id="keyValueArea" style="display:none; flex:1; flex-direction:column;">
-            <textarea id="kvInput" rows="12" placeholder="Paste key=value pairs here (one per line)" style="flex:1"></textarea>
+            <textarea id="kvInput" rows="12" placeholder="Paste key=value pairs here (one per line)"
+              style="flex:1"></textarea>
             <div class="translate-row">
               <button id="kvTranslate" class="btn">Translate All</button>
               <button id="kvClear" class="btn secondary">Clear</button>
@@ -466,7 +467,7 @@
           <div class="label">✨ TRANSLATIONS</div>
 
           <div id="individualOutputs" class="langs">
-            
+
             <div class="lang-card">
               <div class="lang-head">
                 <div class="lang-title">ENGLISH</div>
@@ -710,21 +711,45 @@
       setTimeout(() => kvStatus.innerText = '', 1000);
     });
 
+    // function parseKeyValues(text) {
+    //   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    //   const pairs = [];
+    //   for (const line of lines) {
+    //     const idx = line.indexOf('=');
+    //     if (idx === -1) {
+    //       pairs.push({ key: line, val: '' });
+    //     } else {
+    //       const key = line.slice(0, idx).trim();
+    //       const val = line.slice(idx + 1).trim();
+    //       pairs.push({ key, val });
+    //     }
+    //   }
+    //   return pairs;
+    // }
     function parseKeyValues(text) {
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const lines = text
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
       const pairs = [];
+
       for (const line of lines) {
-        const idx = line.indexOf('=');
-        if (idx === -1) {
-          pairs.push({ key: line, val: '' });
+        const match = line.match(/(.+?)([=:])(.+)/);
+
+        if (!match) {
+          pairs.push({ key: line.trim(), val: '', sep: '=' });
         } else {
-          const key = line.slice(0, idx).trim();
-          const val = line.slice(idx + 1).trim();
-          pairs.push({ key, val });
+          const key = match[1].trim();
+          const sep = match[2];   // '=' or ':'
+          const val = match[3].trim();
+          pairs.push({ key, val, sep });
         }
       }
       return pairs;
     }
+
+
 
     function escapeDelim(s) { return s.split('__KV_DELIM__').join('__KV_DELIM_ESC__'); }
     function unescapeDelim(s) { return s.split('__KV_DELIM_ESC__').join('__KV_DELIM__'); }
@@ -754,7 +779,7 @@
       const resultsPerLang = {};
       for (const lang of LANGS) {
         if (lang.code === 'en') {
-          resultsPerLang[lang.id] = pairs.map(p => `${p.key}=${p.val}`);
+          resultsPerLang[lang.id] = pairs.map(p => `${p.key}${p.sep}${p.val}`);
           continue;
         }
 
@@ -774,12 +799,12 @@
               const { replaced: r2, placeholders: ph2 } = protectPlaceholders(escapeDelim(v));
               const t2 = await googleTranslate(r2, lang.code);
               const restored2 = restorePlaceholders(t2, ph2);
-              per.push(`${pairs[i].key}=${unescapeDelim(restored2)}`);
+              per.push(`${pairs[i].key}${pairs[i].sep}${unescapeDelim(restored2)}`);
             }
             resultsPerLang[lang.id] = per;
           }
         } else {
-          resultsPerLang[lang.id] = pairs.map((p, i) => `${p.key}=${parts[i]}`);
+          resultsPerLang[lang.id] = pairs.map((p, i) => `${p.key}${p.sep}${parts[i]}`);
         }
         await new Promise(r => setTimeout(r, 80));
       }
